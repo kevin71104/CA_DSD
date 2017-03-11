@@ -9,15 +9,15 @@ module alu_tb;
     reg  [7:0] y;
     wire       carry;
     wire [7:0] out;
-    
+
     alu alu2(
         ctrl     ,
         x        ,
         y        ,
         carry    ,
-        out  
+        out
     );
-    
+
    initial begin
        $dumpfile("alu.vcd");
        $dumpvars;
@@ -26,18 +26,20 @@ module alu_tb;
    end
 
     initial begin
-        ctrl = 4'b1101;
-        x    = 8'd0;
-        y    = 8'd0;
-        
+        ctrl = 4'b0000;
+        x    = -8'd127;
+        y    = 8'd1;
+
         #(`CYCLE);
         // 0100 boolean not
-        ctrl = 4'b0100;
-        
+        ctrl = 4'b0000;
+
         #(`HCYCLE);
-        if( out == 8'b1111_1111 ) $display( "PASS --- 0100 boolean not" );
-        else $display( "FAIL --- 0100 boolean not" );
-        
+        if( out == 8'b1000_0010 && carry == 0)
+            $display( "PASS --- 0000 ADD(signed)" );
+        else
+            $display( "FAIL --- 0000 ADD(signed)" );
+
         // finish tb
         #(`CYCLE) $finish;
     end
