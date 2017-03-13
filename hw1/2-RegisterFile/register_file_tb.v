@@ -72,53 +72,50 @@ always@(posedge Clk or negedge rst_n)begin
 			counter = 0;
 			error_num = 0;
 	end
-	
 	else begin
-		
-		if(counter<8)begin
-			RX  <= 0;
-			RY  <= 0;
-			RW  <= counter[2:0];
-			WEN <= 1;
-			busW <= patterns[counter];
-		end
-		else if(counter<16)begin
-			RX  <= counter[2:0];
-			RY  <= 0;
-			RW  <= counter[2:0];
-			WEN <= 0;
-			busW<= 0;
-			
-			if(counter==9 && busX!==8'd0)begin
-				error_num = error_num + 1;
-				$display("error1 QQ!!! %b , %d\n",busX,counter);
-			end	
-			else if(counter!=9 && busX!==patterns[counter-9])begin
-				error_num = error_num + 1;
-				$display("error2 QQ!!! %b , %d\n",busX,counter);
+		if (counter != 8 && counter != 16) begin
+			if(counter<8)begin
+				RX  <= 0;
+				RY  <= 0;
+				RW  <= counter[2:0];
+				WEN <= 1;
+				busW <= patterns[counter];
 			end
-		end
-		else if(counter<24)begin
-			RX  <= 0;
-			RY  <= counter[2:0];
-			RW  <= counter[2:0];
-			WEN <= 0;
-			busW<= 0;
-			
-			if(counter==17 && busY!==8'd0)begin
-				error_num = error_num + 1;
-				$display("error3 QQ!!! %b , %d\n",busY,counter);
+			else if(counter<16)begin
+				RX  <= counter[2:0];
+				RY  <= 0;
+				RW  <= counter[2:0];
+				WEN <= 0;
+				busW<= 0;
+				
+				if(counter==9 && busX!==8'd0)begin
+					error_num = error_num + 1;
+					$display("error1 QQ!!! %b , %d\n",busX,counter);
+				end	
+				else if(counter!=9 && busX!==patterns[counter-9])begin
+					error_num = error_num + 1;
+					$display("error2 QQ!!! %b , %d\n",busX,counter);
+				end
 			end
-			else if(counter!=17 &&busY!==patterns[counter-17])begin
-				error_num = error_num + 1;
-				$display("error4 QQ!!! %b , %d\n",busY,counter);
-			end
+			else if(counter<24)begin
+				RX  <= 0;
+				RY  <= counter[2:0];
+				RW  <= counter[2:0];
+				WEN <= 0;
+				busW<= 0;
+				
+				if(counter==17 && busY!==8'd0)begin
+					error_num = error_num + 1;
+					$display("error3 QQ!!! %b , %d\n",busY,counter);
+				end
+				else if(counter!=17 &&busY!==patterns[counter-17])begin
+					error_num = error_num + 1;
+					$display("error4 QQ!!! %b , %d\n",busY,counter);
+				end
+			end		
 		end
-		
-		counter = counter+1;
-	
+			counter = counter+1;
 	end
-	
 
 end
 

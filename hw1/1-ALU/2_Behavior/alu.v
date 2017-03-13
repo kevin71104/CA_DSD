@@ -46,6 +46,8 @@ module alu(
                 out = x | y;
             4'b0100:
                 out = ~ x;
+            4'b0101:
+                out = x ^ y;
             4'b0110:
                 out = ~(x | y);
             4'b0111:
@@ -63,8 +65,8 @@ module alu(
             default:
             begin
                 out   = 0;
-                carry = 1'b0;
-                temp  = 9'b000000000;
+                carry = 0;
+                temp  = 0;
             end
         endcase
     end
