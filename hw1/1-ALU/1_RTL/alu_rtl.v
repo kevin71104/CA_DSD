@@ -29,7 +29,8 @@ module alu_rtl(
 
     assign temp  =  (ctrl == 4'b0000) ? tempX + tempY :
                     (ctrl == 4'b0001) ? tempX - tempY : 9'b000000000;
-    assign carry = (temp[8] != temp[7]) ? 1 : 0;
+    //assign carry = (temp[8] != temp[7]) ? 1 : 0;
+    assign carry = temp[8];
     assign out   = (ctrl == 4'b0000  || ctrl == 4'b0001) ? temp[7:0] :
                    (ctrl == 4'b0010) ? (x & y)            :
                    (ctrl == 4'b0011) ? (x | y)            :

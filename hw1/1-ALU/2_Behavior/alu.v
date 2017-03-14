@@ -29,7 +29,8 @@ module alu(
                 tempX = {x[7],x[7:0]};
                 tempY = {y[7],y[7:0]};
                 temp = tempX + tempY;
-                carry = (temp[8] != temp[7]) ? 1 : 0;
+                //carry = (temp[8] != temp[7]) ? 1 : 0;
+                carry = temp[8];
                 out = temp[7:0];
             end
             4'b0001:
@@ -37,7 +38,8 @@ module alu(
                 tempX = {x[7],x[7:0]};
                 tempY = {y[7],y[7:0]};
                 temp = tempX - tempY;
-                carry = (temp[8] != temp[7]) ? 1 : 0;
+                //carry = (temp[8] != temp[7]) ? 1 : 0;
+                carry = temp[8];
                 out = temp[7:0];
             end
             4'b0010:
