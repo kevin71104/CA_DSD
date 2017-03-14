@@ -8,7 +8,7 @@ module register_file_tb;
     reg  [2:0] RW, RX, RY;
     reg  [7:0] busW;
     wire [7:0] busX, busY;
-	
+
 parameter nPattern = 10;
 
 reg				rst_n;
@@ -27,22 +27,22 @@ reg		[7 : 0] patterns[ 0 : nPattern ];
     );
 
    // write your test pattern here
-integer         i,error_num,counter;   
+integer         i,error_num,counter;
 
 
 
    initial begin
-       $dumpfile("register_file.vcd");
+       $dumpfile("register_file.fsdb");
        $dumpvars;
        // $fsdbDumpfile("register_file.fsdb");
        // $fsdbDumpvars;
    end
-   
+
 always begin
 	#(`HCYCLE) Clk = ~Clk;	//generaing clk
 end
 
- 
+
 
 initial
 	begin 		// Stimulus patterns
@@ -54,17 +54,17 @@ initial
 	begin
 		patterns[i] = {$random}%256;
 	end
-	
-	
+
+
 	#( `CYCLE * 0.5 ) rst_n = 0;
 	#( `CYCLE ) rst_n = 1;
-	#( 30 * `CYCLE ) 
+	#( 30 * `CYCLE )
 	if(!error_num)
 		$display("\nCongratulations!! Your Verilog Code is correct!!\n");
 	else
 		$display("\nYour Verilog Code has %d errors. \n",error_num);
 	$finish;
-	
+
 end
 
 always@(posedge Clk or negedge rst_n)begin
@@ -87,11 +87,11 @@ always@(posedge Clk or negedge rst_n)begin
 				RW  <= counter[2:0];
 				WEN <= 0;
 				busW<= 0;
-				
+
 				if(counter==9 && busX!==8'd0)begin
 					error_num = error_num + 1;
 					$display("error1 QQ!!! %b , %d\n",busX,counter);
-				end	
+				end
 				else if(counter!=9 && busX!==patterns[counter-9])begin
 					error_num = error_num + 1;
 					$display("error2 QQ!!! %b , %d\n",busX,counter);
@@ -103,7 +103,7 @@ always@(posedge Clk or negedge rst_n)begin
 				RW  <= counter[2:0];
 				WEN <= 0;
 				busW<= 0;
-				
+
 				if(counter==17 && busY!==8'd0)begin
 					error_num = error_num + 1;
 					$display("error3 QQ!!! %b , %d\n",busY,counter);
@@ -112,7 +112,7 @@ always@(posedge Clk or negedge rst_n)begin
 					error_num = error_num + 1;
 					$display("error4 QQ!!! %b , %d\n",busY,counter);
 				end
-			end		
+			end
 		end
 			counter = counter+1;
 	end

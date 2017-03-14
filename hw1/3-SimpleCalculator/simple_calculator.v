@@ -21,11 +21,30 @@ module simple_calculator(
     output       Carry;
 
 // declaration of wire/reg
-    
+    wire        carry_tmp;
+    wire [7:0]  busW_tmp, busX_tmp, busY_tmp, x, y;
 // submodule instantiation
-  
+    register_file rf(
+        Clk      ,
+        WEN      ,
+        RW       ,
+        busW_tmp ,
+        RX       ,
+        RY       ,
+        busX_tmp ,
+        busY_tmp
+    );
+    alu alu1(
+        Ctrl     ,
+        x        ,
+        y        ,
+        Carry    ,
+        busW_tmp ,
+    );
 // combinational part
-  
+    assign x    = Sel ? busX_tmp : DataIn;
+    assign y    = busY_tmp;
+    assign busY = busY_tmp;
 // sequential part
 
 
