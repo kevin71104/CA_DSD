@@ -65,11 +65,11 @@ module alu(
             4'b1100:
                 out = (x == y) ? 1 : 0;
             default:
-            begin
-                out   = 0;
-                carry = 0;
-                temp  = 0;
-            end
+                begin
+                    out   = 0;
+                    carry = 0;
+                    temp  = 0;
+                end
         endcase
     end
 
