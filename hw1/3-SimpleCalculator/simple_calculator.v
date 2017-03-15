@@ -45,7 +45,11 @@ module simple_calculator(
         busW_tmp ,
     );
 // combinational part
-    assign x    = Sel ? busX_tmp : DataIn;
+    //assign x    = Sel ? busX_tmp : DataIn;
+    always@(Sel,busX_tmp,DataIn) begin
+        if (Sel) : x = busX_tmp;
+        else     : x = DataIn; 
+    end
     assign y    = busY_tmp;
     assign busY = busY_tmp;
 // sequential part
