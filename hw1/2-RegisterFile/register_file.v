@@ -1,28 +1,18 @@
-module register_file(
-    Clk  ,
-    WEN  ,
-    RW   ,
-    busW ,
-    RX   ,
-    RY   ,
-    busX ,
-    busY
-);
+module register_file(Clk, WEN, RW, busW, RX, RY, busX, busY);
+
+// write your design here
+
+//==== i/o definition ====
     input        Clk, WEN;
     input  [2:0] RW, RX, RY;
     input  [7:0] busW;
     output [7:0] busX, busY;
 
-    // write your design here
-
-//==== i/o definition ====
+//==== reg/wire definition ====
     reg  [7:0]  register[7:0];
     wire [7:0]  busX_tmp, busY_tmp;
 
-//==== reg/wire definition ====
-
 //==== combinational circuit ====
-
     assign busX_tmp = (RX == 3'b000) ? register[0] :
                (RX == 3'b001) ? register[1] :
                (RX == 3'b010) ? register[2] :
