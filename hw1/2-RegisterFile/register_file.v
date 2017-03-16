@@ -14,7 +14,7 @@ module register_file(Clk, WEN, RW, busW, RX, RY, busX, busY);
 
 //==== combinational circuit ====
     assign busX_tmp = (RX == 3'b000) ? register[0] :
-               (RX == 3'b001) ? register[1] :
+                      (RX == 3'b001) ? register[1] :
                (RX == 3'b010) ? register[2] :
                (RX == 3'b011) ? register[3] :
                (RX == 3'b100) ? register[4] :

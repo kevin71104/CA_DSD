@@ -14,6 +14,7 @@ module alu_tb;
 
     reg        Clk;
     reg  [8:0] true_out,tempX,tempY;
+    wire [8:0] result;
 //======== initial ========
     initial begin
         $dumpfile("alu.vcd");
@@ -21,6 +22,7 @@ module alu_tb;
     end
 //======== DUT instantiation ========
     alu alu1(ctrl, x, y, carry, out);
+    assign result = {carry,out};
 
 //======== clock generation ========
     always#(`HCYCLE) Clk = ~Clk;
@@ -68,8 +70,10 @@ module alu_tb;
         #(0.3*`CYCLE);
         if( {carry,out} == true_out)
             $display( "PASS --- %b(%d) - %b(%d) = %d",x,$signed(x),y,$signed(y),$signed({carry,out}) );
-        else
+        else begin
+            err = err + 1;
             $display( "FAIL --- expected(%b), but yours(%b)",true_out,{carry,out} );
+        end
         #(0.5*`CYCLE);
 
         //0010 : x & y
@@ -81,8 +85,10 @@ module alu_tb;
         #(0.3*`CYCLE);
         if( out == true_out[7:0])
             $display( "PASS --- %b & %b = %b",x,y,out );
-        else
+        else begin
+            err = err + 1;
             $display( "FAIL --- expected(%b), but yours(%b)",true_out[7:0],out);
+        end
         #(0.5*`CYCLE);
 
         //0011 : x | y
@@ -94,8 +100,10 @@ module alu_tb;
         #(0.3*`CYCLE);
         if( out == true_out[7:0])
             $display( "PASS --- %b | %b = %b",x,y,out );
-        else
+        else begin
+            err =err + 1;
             $display( "FAIL --- expected(%b), but yours(%b)",true_out[7:0],out);
+        end
         #(0.5*`CYCLE);
 
         //0100 : ~ x
@@ -106,8 +114,10 @@ module alu_tb;
         #(0.3*`CYCLE);
         if( out == true_out[7:0])
             $display( "PASS --- ~(%b)  = %b",x,out );
-        else
+        else begin
+            err = err + 1;
             $display( "FAIL --- expected(%b), but yours(%b)",true_out[7:0],out);
+        end
         #(0.5*`CYCLE);
 
         //0101 : x ^ y
@@ -119,8 +129,10 @@ module alu_tb;
         #(0.3*`CYCLE);
         if( out == true_out[7:0])
             $display( "PASS --- %b ^ %b = %b",x,y,out );
-        else
+        else begin
+            err = err + 1;
             $display( "FAIL --- expected(%b), but yours(%b)",true_out[7:0],out);
+        end
         #(0.5*`CYCLE);
 
         //0110 : x | y
@@ -132,8 +144,10 @@ module alu_tb;
         #(0.3*`CYCLE);
         if( out == true_out[7:0])
             $display( "PASS --- ~( %b | %b ) = %b",x,y,out );
-        else
+        else begin
+            err = err + 1;
             $display( "FAIL --- expected(%b), but yours(%b)",true_out[7:0],out);
+        end
         #(0.5*`CYCLE);
 
         //0111 : y << x[2:0]
@@ -145,8 +159,10 @@ module alu_tb;
         #(0.3*`CYCLE);
         if( out == true_out[7:0])
             $display( "PASS --- %b << %d  = %b",y,x[2:0],out );
-        else
+        else begin
+            err = err + 1;
             $display( "FAIL --- expected(%b), but yours(%b)",true_out[7:0],out);
+        end
         #(0.5*`CYCLE);
 
         //1000 : y >> x[2:0]
@@ -158,8 +174,10 @@ module alu_tb;
         #(0.3*`CYCLE);
         if( out == true_out[7:0])
             $display( "PASS --- %b >> %d  = %b",y,x[2:0],out );
-        else
+        else begin
+            err = err + 1;
             $display( "FAIL --- expected(%b), but yours(%b)",true_out[7:0],out);
+        end
         #(0.5*`CYCLE);
 
         //1001 : x right-shift
@@ -170,8 +188,10 @@ module alu_tb;
         #(0.3*`CYCLE);
         if( out == true_out[7:0])
             $display( "PASS --- %b right-shift = %b", x, out );
-        else
+        else begin
+            err = err + 1;
             $display( "FAIL --- expected(%b), but yours(%b)",true_out[7:0],out);
+        end
         #(0.5*`CYCLE);
 
         //1010 : x left-rotated
@@ -182,8 +202,10 @@ module alu_tb;
         #(0.3*`CYCLE);
         if( out == true_out[7:0])
             $display( "PASS --- %b left-rotated = %b", x, out );
-        else
+        else begin
+            err = err + 1;
             $display( "FAIL --- expected(%b), but yours(%b)",true_out[7:0],out);
+        end
         #(0.5*`CYCLE);
 
         //1011 : x right-rotated
@@ -194,8 +216,10 @@ module alu_tb;
         #(0.3*`CYCLE);
         if( out == true_out[7:0])
             $display( "PASS --- %b right-rotated = %b", x, out );
-        else
+        else begin
+            err = err + 1;
             $display( "FAIL --- expected(%b), but yours(%b)",true_out[7:0],out);
+        end
         #(0.5*`CYCLE);
 
         //1100 : x equal y ?
@@ -207,12 +231,19 @@ module alu_tb;
         #(0.3*`CYCLE);
         if( out == true_out[7:0])
             $display( "PASS --- %b equal %b ? %d", x, y, out );
-        else
+        else begin
+            err = err + 1;
             $display( "FAIL --- expected(%b), but yours(%b)",true_out[7:0],out);
+        end
         #(0.5*`CYCLE);
 
+        if(err)
+            $display( "there are %d errors", err);
+        else
+            $display( "Congratulations!! The code on tests is correct!! ");
+
         // finish tb
-        #(10*(`CYCLE)) $finish;
+        #(`CYCLE) $finish;
     end
 
 endmodule
