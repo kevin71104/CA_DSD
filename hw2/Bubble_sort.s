@@ -93,6 +93,32 @@ bubbleSort:
 #     }                                                       #
 # }                                                           #
 ###############################################################
+    addi       $sp,    $sp,    -20
+    sw         $ra,    16($sp)
+    sw         $s3,    12($sp)
+    sw         $s2,    8($sp)
+    sw         $s1,    4($sp)
+    sw         $s0,    0($sp)
+    move       $s2,    $a0             # store the address of array
+    move       $s3,    $a1             # store length
+    li         $s0,    0               # i = 0
+fori:
+    bge        $s0,    $s3,    exiti
+    jr         $ra
+    addi       $s1,    $s0,    -1
+
+exitj:
+    addi       $s0,    $s0,    1
+    j          fori
+
+exiti:
+    lw         $s0,    0($sp)
+    lw         $s1,    4($sp)
+    lw         $s2,    8($sp)
+    lw         $s3,    12($sp)
+    lw         $ra,    16($sp)
+    addi       $sp,    $sp,    20
+
     jr         $ra
 
 .globl exit
