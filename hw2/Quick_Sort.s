@@ -6,6 +6,8 @@ str2:   .asciiz        "Data before sorting:\n"
 str3:   .asciiz        "\nData after sorting:\n"
 str4:   .asciiz        ", "
 str5:   .asciiz        "\nEnd of Quick Sort!!"
+str6:   .asciiz        "\n"
+str7:   .asciiz        "pivot: "
 .text
 
 
@@ -14,25 +16,25 @@ my_main:
 ############## load data ##############
 #{-1, 3, -5, 7, -9, 2, -4, 6, -8, 10} #
 #######################################
-li         $t0,        -1
+li         $t0,        -6
 sw         $t0,        0($gp)
-li         $t0,        3
-sw         $t0,        4($gp)
-li         $t0,        -5
-sw         $t0,        8($gp)
 li         $t0,        7
+sw         $t0,        4($gp)
+li         $t0,        8
+sw         $t0,        8($gp)
+li         $t0,        11
 sw         $t0,        12($gp)
-li         $t0,        -9
+li         $t0,        5
 sw         $t0,        16($gp)
-li         $t0,        2
+li         $t0,        -6
 sw         $t0,        20($gp)
-li         $t0,        -4
+li         $t0,        1
 sw         $t0,        24($gp)
-li         $t0,        6
+li         $t0,        0
 sw         $t0,        28($gp)
-li         $t0,        -8
+li         $t0,        -3
 sw         $t0,        32($gp)
-li         $t0,        10
+li         $t0,        -9
 sw         $t0,        36($gp)
 
 li         $v0,        4         # print string
@@ -42,12 +44,11 @@ la         $a0,        str2      # load string
 syscall
 
 # print the data in the array
-move       $t0,        $gp       # get address of array_base
-li         $t1,        0         # i = 0
+move       $a0,        $gp       # get address of array_base
 li         $a1,        10        # upper bound = 10
 jal        printData
 
-# bubbleSort
+# QuickSort
 li         $a1,        10        # length of array
 move       $a0,        $gp       # address of array_base
 jal        QuickSort
@@ -56,8 +57,7 @@ li         $v0,        4         # print string
 la         $a0,        str3      # load string
 syscall
 # print the data in the array
-move       $t0,        $gp       # get address of array_base
-li         $t1,        0         # i = 0
+move       $a0,        $gp       # get address of array_base
 li         $a1,        10        # upper bound = 10
 jal        printData
 
@@ -67,22 +67,35 @@ j          exit
 
 .globl printData
 printData:
-    addi       $sp,   $sp,    -4
+    addi       $sp,   $sp,    -12
     sw         $s0    0($sp)               # put $s0 at $sp
-    move       $s0    $a1                  # move $a1 to $s0
-    beqz       $t1,   L1                   # if(i == 0) skip print ", "
+    sw         $s1    4($sp)
+    sw         $ra    8($sp)
+
+    move       $s0    $a0                  # array address
+    move       $s1    $a1                  # length
+    li         $t0    0                    # i = 0
+    move       $t1    $s0
+
+    beqz       $t0,   L2                   # if(i == 0) skip print ", "
+L1:
     li         $v0,   4
     la         $a0,   str4                 # load ", "
     syscall
-L1:
-    lw         $a0,   ($t0)
+L2:
+    lw         $a0,   ($t1)
     li         $v0,   1                    # print data
     syscall
-    addi       $t0,   4                    # next element
-    addi       $t1,   1                    # i = i + 1
-    blt        $t1,   $s0,    printData    # if(i<10) go to loop
+    addi       $t1,   4                    # next element
+    addi       $t0,   1                    # i = i + 1
+    blt        $t0,   $s1,    L1           # if(i<10) go to loop
+    la         $a0,   str6
+    li         $v0,   4
+    syscall
+    lw         $ra,   8($sp)
+    lw         $s1,   4($sp)
     lw         $s0,   0($sp)               # load data at $sp to $s0
-    addi       $sp,   $sp,    4
+    addi       $sp,   $sp,    12
     jr         $ra                         # jump back to main
 
 
@@ -116,48 +129,126 @@ QuickSort:
 #     //put the pivot data in the swapindex node                          #
 #     //all left nodes have smaller data; right nodes have bigger         #
 #     myswap(swapindex,right);                                            #
-#     quicksort(left,swapindex->_prev,leftlength);                        #
-#     quicksort(swapindex->_next , right , size-leftlength-1);            #
+#     quicksort(left,swapindex->_prev,leftlength-1);                      #
+#     quicksort(swapindex->_next , right , size-leftlength);            #
 # }                                                                       #
 ###########################################################################
     # saving registers
-    addi       $sp,    $sp,    -24
-    sw         $ra,    20($sp)
-    sw         $s4,    16($sp)
-    sw         $s3,    12($sp)
-    sw         $s2,    8($sp)
-    sw         $s1,    4($sp)
-    sw         $s0,    0($sp)
+    addi       $sp,    $sp,    -28
+    sw         $ra,    24($sp)
+    sw         $s5,    20($sp)             # for swapindex
+    sw         $s4,    16($sp)             # for leftlength
+    sw         $s3,    12($sp)             # for length
+    sw         $s2,    8($sp)              # for address of array
+    sw         $s1,    4($sp)              # for pivot
+    sw         $s0,    0($sp)              # for index
     # move parameters
-    move       $s2,    $a0             # $s2 = address of array
-    move       $s3,    $a1             # $s3 = length
-    li         $s0,    0               # $s0 = index = 0
-    li         $t0,    1
+    move       $s2,    $a0                 # $s2 = address of array
+    move       $s3,    $a1                 # $s3 = length
+    li         $s0,    0                   # $s0 = index = 0
+    li         $s4,    0                   # $s4 = leftlength = 0
+    li         $s5,    0                   # $s5 = swapindex = 0
     # no need to sort
-    blt        $s3,    $t0,    exiti   # if(n <= 1) return
+    li         $t0,    1
+    ble        $s3,    $t0,    exitf       # if(n <= 1) return
     # find medium data
     li         $t0,    2
-    div        $t0,    $s3,    $t0     # $t0 = n/2
+    div        $t0,    $s3,    $t0         # $t0 = n/2
+    addi       $t0,    $t0,    -1
     sll        $t1,    $t0,    2
-    add        $t2,    $t1,    $s2     # $t1 = v + 4 * (n/2)
-    lw         $s1,    0($t2)          # $s1 = pivot
+    add        $t2,    $t1,    $s2         # $t2 = v + 4 * (n/2 - 1)
+    lw         $s1,    0($t2)              # $s1 = pivot
+    # print "pivot:"
+    la         $a0,    str7
+    li         $v0,    4
+    syscall
+    move       $a0,    $s1
+    li         $v0,    1
+    syscall
+    la         $a0,    str6
+    li         $v0,    4
+    syscall
     # put pivot in the rightmost
     move       $a0,    $s2
     li         $t0,    2
-    div        $t0,    $s3,    $t0     # $t0 = n/2
+    div        $t0,    $s3,    $t0         # $t0 = n/2
+    addi       $a1,    $t0,    -1
+    addi       $a2,    $s3,    -1          # $a2 = length-1
+    jal        swap
+    # while loop
+while1:
+    bge        $s0,    $s3,    exitwhile   # if(index >= length) break
+    move       $t0,    $s0
+    sll        $t0,    $t0,    2
+    add        $t1,    $s2,    $t0         # $t1 = v + 4 * index
+    lw         $t2     0($t1)              # $t2 = v[index]
+    bge        $t2,    $s1,    noswap
+    # swap(index,swapindex)
+    move       $a0,    $s2
+    move       $a1,    $s0
+    move       $a2,    $s5
+    jal        swap
+    addi       $s5,    1                   # swapindex = swapindex + 1
+    addi       $s4,    1                   # leftlength = leftlength + 1
+
+noswap:
+    addi       $s0,    1                   # index = index + 1
+    j          while1
+
+exitwhile:
+    addi       $t0,    $s3,    -1          # $t0 = length-1
+    move       $a0,    $s2
     move       $a1,    $t0
-    addi       $t1,    $s3,    -1      # $t1 = length-1
-    move       $a2,    $t1
+    move       $a2,    $s5
     jal        swap
 
-exiti:
+    move       $a0,    $s2
+    li         $a1,    10
+    jal        printData
+
+
+    move       $a1,    $s4
+#    move       $a0,    $a1
+#    li         $v0,    1
+#    syscall
+#    la         $a0,    str4
+#    li         $v0,    4
+#    syscall
+    move       $a0,    $s2
+#    li         $v0,    1
+#    syscall
+#    la         $a0,    str6
+#    li         $v0,    4
+#    syscall
+    jal        QuickSort
+
+    addi       $t0,    $s4,    1
+    sub        $a1,    $s3,    $t0
+#    move       $a0,    $a1
+#    li         $v0,    1
+#    syscall
+#    la         $a0,    str4
+#    li         $v0,    4
+#    syscall
+    addi       $t0,    $s5,    1       # swapindex's next
+    sll        $t0,    $t0,    2
+    add        $a0,    $t0,    $s2
+#    li         $v0,    1
+#    syscall
+#    la         $a0,    str6
+#    li         $v0,    4
+#    syscall
+    jal        QuickSort
+
+exitf:
     lw         $s0,    0($sp)
     lw         $s1,    4($sp)
     lw         $s2,    8($sp)
     lw         $s3,    12($sp)
     lw         $s4,    16($sp)
-    lw         $ra,    20($sp)
-    addi       $sp,    $sp,    20
+    lw         $s5,    20($sp)
+    lw         $ra,    24($sp)
+    addi       $sp,    $sp,    28
     jr         $ra
 
 ########## C++ code ###########
