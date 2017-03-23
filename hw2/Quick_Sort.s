@@ -8,6 +8,8 @@ str4:   .asciiz        ", "
 str5:   .asciiz        "\nEnd of Quick Sort!!"
 str6:   .asciiz        "\n"
 str7:   .asciiz        "pivot: "
+str8:   .asciiz        "Please input the length of the array: \n"
+str9:   .asciiz        "Please input the elements of the array: \n"
 .text
 
 
@@ -16,54 +18,84 @@ my_main:
 ############## load data ##############
 #{-1, 3, -5, 7, -9, 2, -4, 6, -8, 10} #
 #######################################
-li         $t0,        -6
-sw         $t0,        0($gp)
-li         $t0,        7
-sw         $t0,        4($gp)
-li         $t0,        8
-sw         $t0,        8($gp)
-li         $t0,        11
-sw         $t0,        12($gp)
-li         $t0,        5
-sw         $t0,        16($gp)
-li         $t0,        -6
-sw         $t0,        20($gp)
-li         $t0,        1
-sw         $t0,        24($gp)
-li         $t0,        0
-sw         $t0,        28($gp)
-li         $t0,        -3
-sw         $t0,        32($gp)
-li         $t0,        -9
-sw         $t0,        36($gp)
 
-li         $v0,        4         # print string
-la         $a0,        str1      # load string
+li         $v0,        4
+la         $a0,        str8
 syscall
-la         $a0,        str2      # load string
+
+# Get the length of the array
+li         $v0,        5
+syscall
+move       $s7,        $v0          # store the length in $s0
+
+# Get the dynamic memory
+move       $t0,        $s7
+sll        $t1,        $t0,    2
+li         $v0,        9
+move       $a0,        $t1
+syscall
+move       $s1,        $v0          # store the address in $s1
+
+# Get the elements of the array
+li         $v0,        4
+la         $a0,        str9
+syscall
+move       $a0,        $s7
+move       $a1,        $s1
+jal        readData
+
+li         $v0,        4            # print string
+la         $a0,        str1         # load string
+syscall
+la         $a0,        str2
 syscall
 
 # print the data in the array
-move       $a0,        $gp       # get address of array_base
-li         $a1,        10        # upper bound = 10
+move       $a0,        $s1          # get address of array_base
+move       $a1,        $s7          # upper bound = length
 jal        printData
 
 # QuickSort
-li         $a1,        10        # length of array
-move       $a0,        $gp       # address of array_base
+move       $a1,        $s7          # length of array
+move       $a0,        $s1          # address of array_base
 jal        QuickSort
 
-li         $v0,        4         # print string
-la         $a0,        str3      # load string
+li         $v0,        4            # print string
+la         $a0,        str3         # load string
 syscall
+
 # print the data in the array
-move       $a0,        $gp       # get address of array_base
-li         $a1,        10        # upper bound = 10
+move       $a0,        $s1          # get address of array_base
+move       $a1,        $s7          # upper bound = length
 jal        printData
 
 # exit program
 j          exit
 
+.globl readData
+readData:
+    addi       $sp,   $sp,    -12
+    sw         $s0,   0($sp)
+    sw         $s1,   4($sp)
+    sw         $ra,   8($sp)
+
+    move       $s0,   $a0                 # length
+    move       $s1,   $a1                 # address
+    li         $t0,   0
+loop:
+    bge        $t0,   $s0,    exitRead
+    sll        $t1,   $t0,    2
+    add        $t2,   $s1,    $t1
+    li         $v0,   5
+    syscall
+    sw         $v0,   0($t2)
+    addi       $t0,   1
+    j          loop
+exitRead:
+    lw         $ra,   8($sp)
+    lw         $s1,   4($sp)
+    lw         $s0,   0($sp)
+    jr         $ra
 
 .globl printData
 printData:
@@ -152,8 +184,7 @@ QuickSort:
     li         $t0,    1
     ble        $s3,    $t0,    exitf       # if(n <= 1) return
     # find medium data
-    li         $t0,    2
-    div        $t0,    $s3,    $t0         # $t0 = n/2
+    srl        $t0,    $s3,    1           # $t0 = n/2
     addi       $t0,    $t0,    -1
     sll        $t1,    $t0,    2
     add        $t2,    $t1,    $s2         # $t2 = v + 4 * (n/2 - 1)
@@ -170,8 +201,7 @@ QuickSort:
     syscall
     # put pivot in the rightmost
     move       $a0,    $s2
-    li         $t0,    2
-    div        $t0,    $s3,    $t0         # $t0 = n/2
+    srl        $t0,    $s3,    1           # $t0 = n/2
     addi       $a1,    $t0,    -1
     addi       $a2,    $s3,    -1          # $a2 = length-1
     jal        swap
@@ -203,7 +233,7 @@ exitwhile:
     jal        swap
 
     move       $a0,    $s2
-    li         $a1,    10
+    move       $a1,    $s3
     jal        printData
 
 
