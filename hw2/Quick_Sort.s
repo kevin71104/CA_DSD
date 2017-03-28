@@ -12,18 +12,16 @@ str8:   .asciiz        "Please input the length of the array: \n"
 str9:   .asciiz        "Please input the elements of the array: \n"
 .text
 
-
 .globl my_main
 my_main:
 ############## load data ##############
 #{-1, 3, -5, 7, -9, 2, -4, 6, -8, 10} #
 #######################################
 
+# Get the length of the array
 li         $v0,        4
 la         $a0,        str8
 syscall
-
-# Get the length of the array
 li         $v0,        5
 syscall
 move       $s7,        $v0          # store the length in $s0
@@ -44,13 +42,12 @@ move       $a0,        $s7
 move       $a1,        $s1
 jal        readData
 
+# print the unsorted data in the array
 li         $v0,        4            # print string
 la         $a0,        str1         # load string
 syscall
 la         $a0,        str2
 syscall
-
-# print the data in the array
 move       $a0,        $s1          # get address of array_base
 move       $a1,        $s7          # upper bound = length
 jal        printData
@@ -60,11 +57,10 @@ move       $a1,        $s7          # length of array
 move       $a0,        $s1          # address of array_base
 jal        QuickSort
 
+# print the sorted data in the array
 li         $v0,        4            # print string
 la         $a0,        str3         # load string
 syscall
-
-# print the data in the array
 move       $a0,        $s1          # get address of array_base
 move       $a1,        $s7          # upper bound = length
 jal        printData
@@ -74,11 +70,12 @@ j          exit
 
 .globl readData
 readData:
+# preserve saving registers
     addi       $sp,   $sp,    -12
     sw         $s0,   0($sp)
     sw         $s1,   4($sp)
     sw         $ra,   8($sp)
-
+# get parameters and initialization
     move       $s0,   $a0                 # length
     move       $s1,   $a1                 # address
     li         $t0,   0
@@ -100,7 +97,7 @@ exitRead:
 .globl printData
 printData:
     addi       $sp,   $sp,    -12
-    sw         $s0    0($sp)               # put $s0 at $sp
+    sw         $s0    0($sp)
     sw         $s1    4($sp)
     sw         $ra    8($sp)
 
@@ -150,7 +147,7 @@ QuickSort:
 #     index = left;                                                       #
 #     size_t leftlength = 0;                                              #
 #     while(index != right){                                              #
-#         if(index->_data <= pivot){                                      #
+#         if(index->_data < pivot){                                      #
 #             //cerr<<index->_data<<endl;                                 #
 #             myswap(index , swapindex);                                  #
 #             swapindex = swapindex->_next;                               #
@@ -231,43 +228,20 @@ exitwhile:
     move       $a1,    $t0
     move       $a2,    $s5
     jal        swap
-
+# check result
     move       $a0,    $s2
     move       $a1,    $s3
     jal        printData
 
-
     move       $a1,    $s4
-#    move       $a0,    $a1
-#    li         $v0,    1
-#    syscall
-#    la         $a0,    str4
-#    li         $v0,    4
-#    syscall
     move       $a0,    $s2
-#    li         $v0,    1
-#    syscall
-#    la         $a0,    str6
-#    li         $v0,    4
-#    syscall
     jal        QuickSort
 
     addi       $t0,    $s4,    1
     sub        $a1,    $s3,    $t0
-#    move       $a0,    $a1
-#    li         $v0,    1
-#    syscall
-#    la         $a0,    str4
-#    li         $v0,    4
-#    syscall
     addi       $t0,    $s5,    1       # swapindex's next
     sll        $t0,    $t0,    2
     add        $a0,    $t0,    $s2
-#    li         $v0,    1
-#    syscall
-#    la         $a0,    str6
-#    li         $v0,    4
-#    syscall
     jal        QuickSort
 
 exitf:
