@@ -1,4 +1,4 @@
-# Bubble Sort
+# Quick Sort
 
 .data
 str1:   .asciiz        "Quick Sort\n"
