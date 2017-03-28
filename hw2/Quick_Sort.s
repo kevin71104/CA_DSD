@@ -130,6 +130,8 @@ L2:
 
 .globl QuickSort
 QuickSort:
+# $a0 : address of array
+# $a1 : length
 ############################### C++ code ##################################
 # void quicksort(DListNode<T>* left , DListNode<T>* right , size_t size){ #
 #    if(size <= 1 )return;                                                #
@@ -147,8 +149,7 @@ QuickSort:
 #     index = left;                                                       #
 #     size_t leftlength = 0;                                              #
 #     while(index != right){                                              #
-#         if(index->_data < pivot){                                      #
-#             //cerr<<index->_data<<endl;                                 #
+#         if(index->_data < pivot){                                       #
 #             myswap(index , swapindex);                                  #
 #             swapindex = swapindex->_next;                               #
 #             leftlength++;                                               #
@@ -156,10 +157,10 @@ QuickSort:
 #         index = index->_next;	                                          #
 #     }                                                                   #
 #     //put the pivot data in the swapindex node                          #
-#     //all left nodes have smaller data; right nodes have bigger         #
+#     //all left nodes are smaller and all right nodes are bigger         #
 #     myswap(swapindex,right);                                            #
 #     quicksort(left,swapindex->_prev,leftlength-1);                      #
-#     quicksort(swapindex->_next , right , size-leftlength);            #
+#     quicksort(swapindex->_next , right , size-leftlength);              #
 # }                                                                       #
 ###########################################################################
     # saving registers
@@ -228,7 +229,7 @@ exitwhile:
     move       $a1,    $t0
     move       $a2,    $s5
     jal        swap
-# check result
+    # check result
     move       $a0,    $s2
     move       $a1,    $s3
     jal        printData
@@ -255,13 +256,15 @@ exitf:
     addi       $sp,    $sp,    28
     jr         $ra
 
-########## C++ code ###########
-#    temp = v[j];             #
-#    v[j] = v[k];             #
-#    v[k] = temp;             #
-# $a0 = the address of array  #
-# $a1 = j , $a2 = k           #
-###############################
+.globl swap
+# $a0 = the address of array
+# $a1 = jth element
+# $a2 = kth element
+######## C++ code #######
+#   temp = v[j];        #
+#   v[j] = v[k];        #
+#   v[k] = temp;        #
+#########################
 swap:
     move       $t0,    $a0              # $t0 = address
     move       $t1,    $a1              # $t1 = j
