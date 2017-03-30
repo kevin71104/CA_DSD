@@ -1,23 +1,27 @@
-# Bubble Sort
+#############################################################
+#                Computer Architecture 2017                 #
+#                Hw2 : MIPS implementation                  #
+#                       Bubble Sort                         #
+#############################################################
 
 .data
-str1:   .asciiz        "Bubble Sort\n"
+str1:   .asciiz        "\nStart Bubble Sort\n\n"
 str2:   .asciiz        "Data before sorting:\n"
-str3:   .asciiz        "\nData after sorting:\n"
+str3:   .asciiz        "Data after sorting:\n"
 str4:   .asciiz        ", "
 str5:   .asciiz        "\nEnd of Bubble Sort!!"
 str6:   .asciiz        "\n"
 str7:   .asciiz        "pivot: "
 str8:   .asciiz        "Please input the length of the array: \n"
 str9:   .asciiz        "Please input the elements of the array: \n"
+
 .text
 
-
+############## sort data ###############
+# {-1, 3, -5, 7, -9, 2, -4, 6, -8, 10} #
+########################################
 .globl my_main
 my_main:
-############## load data ##############
-#{-1, 3, -5, 7, -9, 2, -4, 6, -8, 10} #
-#######################################
 li         $v0,        4
 la         $a0,        str8
 syscall
@@ -44,18 +48,18 @@ move       $a0,        $s7
 move       $a1,        $s1
 jal        readData
 
+# print the unsorted data in the array
 li         $v0,        4            # print string
 la         $a0,        str1         # load string
 syscall
 la         $a0,        str2
 syscall
 
-# print the data in the array
 move       $a0,        $s1          # get address of array_base
 move       $a1,        $s7          # upper bound = length
 jal        printData
 
-# QuickSort
+# BubbleSort
 move       $a1,        $s7          # length of array
 move       $a0,        $s1          # address of array_base
 jal        bubbleSort
@@ -64,7 +68,7 @@ li         $v0,        4            # print string
 la         $a0,        str3         # load string
 syscall
 
-# print the data in the array
+# print the sorted data in the array
 move       $a0,        $s1          # get address of array_base
 move       $a1,        $s7          # upper bound = length
 jal        printData
@@ -131,25 +135,30 @@ L2:
     jr         $ra                         # jump back to main
 
 
-.globl bubbleSort
-bubbleSort:
+
 ######################### C++ code ############################
 # void sort (int v[], int n)                                  #
 # {                                                           #
 #     int i, j;                                               #
 #     for (i = 0; i < n; i += 1) {                            #
-#         for (j = i – 1; j >= 0 && v[j] > v[j + 1]; j -=1){  #
+#         for (j = i – 1; j >= 0 && v[j] > v[j + 1]; j -= 1){ #
 #             swap(v,j);                                      #
 #         }                                                   #
 #     }                                                       #
 # }                                                           #
 ###############################################################
+.globl bubbleSort
+bubbleSort:
+# $a0 : address of array
+# $a1 : length
+# saving registers
     addi       $sp,    $sp,    -20
     sw         $ra,    16($sp)
     sw         $s3,    12($sp)
     sw         $s2,    8($sp)
     sw         $s1,    4($sp)
     sw         $s0,    0($sp)
+# move parameters
     move       $s2,    $a0             # s2 = address of array
     move       $s3,    $a1             # s3 = length
     li         $s0,    0               # i = 0
@@ -163,10 +172,11 @@ forj:
     lw         $t2,    0($t1)          # $t2 = v[j]
     lw         $t3,    4($t1)          # $t3 = v[j+1]
     bge        $t3,    $t2,    exitj   # if(v[j+1] > v[j]) exit j-loop
-    # swap(v,j)
+# swap(v,j)
     move       $a0,    $s2             # parameter: address of array
     move       $a1,    $s1             # parameter: index
     jal        swap
+    
     addi       $s1,    $s1,    -1      # j = j - 1
     j          forj
 exitj:

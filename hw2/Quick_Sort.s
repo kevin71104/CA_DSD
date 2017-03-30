@@ -1,7 +1,11 @@
-# Quick Sort
+#############################################################
+#                Computer Architecture 2017                 #
+#                Hw2 : MIPS implementation                  #
+#                        Quick Sort                         #
+#############################################################
 
 .data
-str1:   .asciiz        "Quick Sort\n"
+str1:   .asciiz        "\nStart Quick Sort\n"
 str2:   .asciiz        "Data before sorting:\n"
 str3:   .asciiz        "\nData after sorting:\n"
 str4:   .asciiz        ", "
@@ -10,18 +14,19 @@ str6:   .asciiz        "\n"
 str7:   .asciiz        "pivot: "
 str8:   .asciiz        "Please input the length of the array: \n"
 str9:   .asciiz        "Please input the elements of the array: \n"
+
 .text
 
+############## sort data ###############
+# {-1, 3, -5, 7, -9, 2, -4, 6, -8, 10} #
+########################################
 .globl my_main
 my_main:
-############## load data ##############
-#{-1, 3, -5, 7, -9, 2, -4, 6, -8, 10} #
-#######################################
-
-# Get the length of the array
 li         $v0,        4
 la         $a0,        str8
 syscall
+
+# Get the length of the array
 li         $v0,        5
 syscall
 move       $s7,        $v0          # store the length in $s0
@@ -51,6 +56,8 @@ syscall
 move       $a0,        $s1          # get address of array_base
 move       $a1,        $s7          # upper bound = length
 jal        printData
+la         $a0,        str6
+syscall
 
 # QuickSort
 move       $a1,        $s7          # length of array
@@ -70,6 +77,8 @@ j          exit
 
 .globl readData
 readData:
+# $a0 : length of array
+# $a1 : address of array
 # preserve saving registers
     addi       $sp,   $sp,    -12
     sw         $s0,   0($sp)
@@ -96,6 +105,8 @@ exitRead:
 
 .globl printData
 printData:
+# $a0 : address of array
+# $a1 : length of array
     addi       $sp,   $sp,    -12
     sw         $s0    0($sp)
     sw         $s1    4($sp)
@@ -127,11 +138,6 @@ L2:
     addi       $sp,   $sp,    12
     jr         $ra                         # jump back to main
 
-
-.globl QuickSort
-QuickSort:
-# $a0 : address of array
-# $a1 : length
 ############################### C++ code ##################################
 # void quicksort(DListNode<T>* left , DListNode<T>* right , size_t size){ #
 #    if(size <= 1 )return;                                                #
@@ -163,7 +169,11 @@ QuickSort:
 #     quicksort(swapindex->_next , right , size-leftlength);              #
 # }                                                                       #
 ###########################################################################
-    # saving registers
+.globl QuickSort
+QuickSort:
+# $a0 : address of array
+# $a1 : length
+# saving registers
     addi       $sp,    $sp,    -28
     sw         $ra,    24($sp)
     sw         $s5,    20($sp)             # for swapindex
@@ -172,22 +182,22 @@ QuickSort:
     sw         $s2,    8($sp)              # for address of array
     sw         $s1,    4($sp)              # for pivot
     sw         $s0,    0($sp)              # for index
-    # move parameters
+# move parameters
     move       $s2,    $a0                 # $s2 = address of array
     move       $s3,    $a1                 # $s3 = length
     li         $s0,    0                   # $s0 = index = 0
     li         $s4,    0                   # $s4 = leftlength = 0
     li         $s5,    0                   # $s5 = swapindex = 0
-    # no need to sort
+# no need to sort
     li         $t0,    1
     ble        $s3,    $t0,    exitf       # if(n <= 1) return
-    # find medium data
+# find medium data
     srl        $t0,    $s3,    1           # $t0 = n/2
     addi       $t0,    $t0,    -1
     sll        $t1,    $t0,    2
     add        $t2,    $t1,    $s2         # $t2 = v + 4 * (n/2 - 1)
     lw         $s1,    0($t2)              # $s1 = pivot
-    # print "pivot:"
+# print "pivot:"
     la         $a0,    str7
     li         $v0,    4
     syscall
@@ -197,13 +207,13 @@ QuickSort:
     la         $a0,    str6
     li         $v0,    4
     syscall
-    # put pivot in the rightmost
+# put pivot in the rightmost
     move       $a0,    $s2
     srl        $t0,    $s3,    1           # $t0 = n/2
     addi       $a1,    $t0,    -1
     addi       $a2,    $s3,    -1          # $a2 = length-1
     jal        swap
-    # while loop
+# while loop
 while1:
     bge        $s0,    $s3,    exitwhile   # if(index >= length) break
     move       $t0,    $s0
@@ -211,7 +221,7 @@ while1:
     add        $t1,    $s2,    $t0         # $t1 = v + 4 * index
     lw         $t2     0($t1)              # $t2 = v[index]
     bge        $t2,    $s1,    noswap
-    # swap(index,swapindex)
+# swap(index,swapindex)
     move       $a0,    $s2
     move       $a1,    $s0
     move       $a2,    $s5
@@ -229,22 +239,22 @@ exitwhile:
     move       $a1,    $t0
     move       $a2,    $s5
     jal        swap
-    # check result
+# check result
     move       $a0,    $s2
     move       $a1,    $s3
     jal        printData
-
+# left piece
     move       $a1,    $s4
     move       $a0,    $s2
     jal        QuickSort
-
+# right piece
     addi       $t0,    $s4,    1
     sub        $a1,    $s3,    $t0
     addi       $t0,    $s5,    1       # swapindex's next
     sll        $t0,    $t0,    2
     add        $a0,    $t0,    $s2
     jal        QuickSort
-
+# restore registers
 exitf:
     lw         $s0,    0($sp)
     lw         $s1,    4($sp)
