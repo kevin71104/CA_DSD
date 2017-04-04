@@ -28,6 +28,7 @@
 // data memory output signals  ReadDataMem
 // program counter/address     PC, PCnext, JumpAddr, BranchAddr
 //=========================================================
+`include "ALU_control.v"
 
 module SingleCycle_MIPS(
     clk,
@@ -37,9 +38,6 @@ module SingleCycle_MIPS(
     RF_writedata,
     ReadDataMem,
     CEN,
-    WEN,
-    A,
-    ReadData2,
     OEN
 );
 
@@ -70,10 +68,18 @@ module SingleCycle_MIPS(
     wire [31:0]   WriteData;
     wire [4:0]    Reg_R1, Reg_R2, Reg_W;
     // PC
-    wire [31:0]   PC, PCnext, BranchAddr, JumpAddr, JumpRegAddr;
+    reg           PC;
+    wire [31:0]   PCin, PCnext, BranchAddr, JumpAddr, JumpRegAddr;
     // Control Signals
     wire [1:0]    RegDst, MemtoReg, ALUOp;
     wire          Branch, MemRead, MemWrite, ALUsrc, RegWrite, Jump, JumpReg;
+
+//==== submodule declaration ==============================
+    ALU_control i_ALU_control(
+        ALUOp,
+        IR[5:0],
+        ALUctrl;
+    );
 
 //==== combinational part =================================
     always@ (~rst_n) begin
