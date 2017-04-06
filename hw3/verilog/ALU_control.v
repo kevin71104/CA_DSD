@@ -4,9 +4,9 @@
 //=========================================================
 
 module ALU_control(
-    ALUOp;
-    func;
-    ALUctrl;
+    ALUOp,
+    func,
+    ALUctrl
 );
 
 //==== in/out declaration =================================
@@ -15,9 +15,9 @@ module ALU_control(
     output   [3:0] ALUctrl;
 
 //==== combinational part =================================
-    ALUctrl[3] = 0;
-    always@ (*) begin
-        ALUctrl[0] = (func[3] | func[0]) & ALUOp[1];
-        ALUctrl[1] = ~(func[2] & ALUOp[1]);
-        ALUctrl[2] = ALUOp[0] | (ALUOp1 & func[1]);
-    end
+    assign ALUctrl[3] = 1'b0;
+    assign ALUctrl[0] = (func[3] | func[0]) & ALUOp[1];
+    assign ALUctrl[1] = ~(func[2] & ALUOp[1]);
+    assign ALUctrl[2] = ALUOp[0] | (ALUOp[1] & func[1]);
+
+endmodule
