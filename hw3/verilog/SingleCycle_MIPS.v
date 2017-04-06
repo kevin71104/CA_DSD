@@ -155,7 +155,7 @@ module SingleCycle_MIPS(
         if(~rst_n) begin
             PC <= 32'd0;
             for (i = 0; i < 32; i = i+1)
-                RF[i] = 32'd0;
+                RF[i] <= 32'd0;
         end
         else begin
             PC <= PCfinal;
