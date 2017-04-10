@@ -190,29 +190,32 @@ module ALU(
     input    [31:0] ALUin1;
     input    [31:0] ALUin2;
     input    [3:0]  ALUctrl;
-    output   [31:0] ALUresult;
+    output   reg [31:0] ALUresult;
     output          ALUzero;
     reg      [31:0] tempResult;
 
 //==== combinational part =================================
     assign ALUzero   = (ALUresult == 32'd0) ? 1 : 0;
-    assign ALUresult = tempResult;
+    //assign ALUresult = tempResult;
     always@ (*) begin
         case(ALUctrl)
             4'b0000:
-                tempResult = ALUin1 & ALUin2;
+                ALUresult = ALUin1 & ALUin2;
             4'b0001:
-                tempResult = ALUin1 | ALUin2;
+                ALUresult = ALUin1 | ALUin2;
             4'b0010:
-                tempResult = ALUin1 + ALUin2;
+                ALUresult = ALUin1 + ALUin2;
             4'b0110:
-                tempResult = ALUin1 - ALUin2;
+                ALUresult = ALUin1 - ALUin2;
             4'b0111:
-                tempResult = (ALUin1 < ALUin2) ? 32'd1 : 32'd0;
-            4'b1100:
-                tempResult = ~(ALUin1 | ALUin2);
+            begin
+                tempResult = ALUin1 - ALUin2;
+                ALUresult = {31'd0, tempResult[31]};
+            end
+            //4'b1100:
+                //tempResult = ~(ALUin1 | ALUin2);
             default:
-                tempResult = 32'd0;
+                ALUresult = 32'd0;
         endcase
     end
 endmodule
