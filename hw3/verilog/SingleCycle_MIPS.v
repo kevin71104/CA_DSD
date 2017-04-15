@@ -60,7 +60,6 @@ module SingleCycle_MIPS(
     output        OEN;  // output_enable, 0
 
 //==== reg/wire declaration ===============================
-    integer       i;
     // 32 registers in the CPU
     reg  [31:0]   RF[31:0];
     // MUX results
@@ -151,6 +150,7 @@ module SingleCycle_MIPS(
     assign RF_writedata = WriteData;
 
 //==== sequential part ====================================
+    integer       i;
     always@ (posedge clk) begin
         if(~rst_n) begin
             PC <= 32'd0;
