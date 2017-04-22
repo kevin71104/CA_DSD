@@ -5,26 +5,29 @@
 #include "Mem.h"
 #include "L1cache.h"
 using namespace std;
- 
+
 int main() {
 	int error_counter = 0;//error counter
 	int way_number = 8;//direct map for 1, 2-way for 2, 4-way for 4, fully associative for 8
+    bool getfrom = true;
 	Mem mem;//create memory
 	L1cache cache(&mem,way_number);// create cache
 
 	for (int i = 0; i<1024;i++){
+        //cout << "memblock" << i << endl;
 		int ans = cache.getfromCache(i);
 		if (ans != 0){
 			error_counter++;
 			cout << "[error] cache address: "<< i << " data is wrong!!" << endl;
-		} 
+            getfrom = false;
+		}
 	}
-	
 
+/*
 	for (int i = 0; i<1024;i++){
 		cache.writetoCache(i,i);
 	}
-	
+
 
 	for (int i = 0; i<1024;i++){
 		int ans = cache.getfromCache(i);
@@ -39,5 +42,10 @@ int main() {
 	}else {
 		cout << "Error!! You have " << error_counter << " errors, please check again!" <<endl;
 	}
+*/
+    if(getfrom)
+        cout << "getfromCache is correct !!\n";
+    else
+        cout << "getfromCache is incorrect !!\n";
 	return 0;
 }

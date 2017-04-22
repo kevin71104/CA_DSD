@@ -7,7 +7,7 @@ private:
 	int mem[MEMsize][4];
 public:
 	Mem ();
-	int* getfromMem(const int);
+	int* getfromMem(const int);    //get the pointer to the 4-elements array
 	void writetoMem(const int,int*);
 };
 
