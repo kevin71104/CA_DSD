@@ -33,7 +33,7 @@ int L1cache::getfromCache(const int address)
 	int block_label = 0;
 
 	for(unsigned i = 0; i < way_number; i++){
-		int temp_label = set_label * way_number + i;
+		int temp_label = set_label + set_num * i;
 		// get block with the smallest release bits
 		if(i == 0)
 			block_label = temp_label;
@@ -60,7 +60,6 @@ int L1cache::getfromCache(const int address)
 	// write back
 	if(cache[block_label][1] == 1){
 	    int write_add = (cache[block_label][3] << (shift-2)) + set_label;
-		//cout << "write_add" << write_add;
 	    mem -> writetoMem(write_add, &(cache[block_label][4]) );
     }
 	// get new data
@@ -85,7 +84,7 @@ void L1cache::writetoCache(const int address,const int indata)
 	int block_label = 0;
 
 	for(unsigned i = 0; i < way_number; i++){
-		int temp_label = set_label * way_number + i;
+		int temp_label = set_label + set_num * i;
 		// get block with the smallest release bits
 		if(i == 0)
 			block_label = temp_label;
@@ -104,21 +103,25 @@ void L1cache::writetoCache(const int address,const int indata)
 				for(unsigned j = 0; j < L1size; j++)
 					if(j != temp_label)
 						cache[j][2]--;
+				return;
 			}
 		}
 	}
-
 	L1writemiss++;
-	int* dataptr = mem -> getfromMem(address >> 2);
 	// write back
 	if(cache[block_label][1] == 1){
 		int write_add = (cache[block_label][3] << (shift - 2)) + set_label;
-		//cout << "write_add" << write_add << '\n';
+		//cout << "write_add: " << write_add << '\n';
+		//for(unsigned i = 0; i<4; i++)
+		    //cout << cache[block_label][4+i] << ',';
+		//cout << '\n';
 		mem -> writetoMem(write_add, &(cache[block_label][4]) );
 	}
 	// get new data
+	int* dataptr = mem -> getfromMem(address >> 2);
 	for(unsigned i = 0; i < 4; i++)
 		cache[block_label][4 + i] = dataptr[i];
+
 	cache[block_label][0] = 1;
 	cache[block_label][1] = 1;
 	cache[block_label][2] = INT_MAX;
