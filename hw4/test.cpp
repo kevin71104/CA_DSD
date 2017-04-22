@@ -8,7 +8,7 @@ using namespace std;
 
 int main() {
 	int error_counter = 0;//error counter
-	int way_number = 8;//direct map for 1, 2-way for 2, 4-way for 4, fully associative for 8
+	int way_number = 1;//direct map for 1, 2-way for 2, 4-way for 4, fully associative for 8
     bool getfrom = true;
 	Mem mem;//create memory
 	L1cache cache(&mem,way_number);// create cache
@@ -23,7 +23,7 @@ int main() {
 		}
 	}
 
-/*
+
 	for (int i = 0; i<1024;i++){
 		cache.writetoCache(i,i);
 	}
@@ -42,10 +42,11 @@ int main() {
 	}else {
 		cout << "Error!! You have " << error_counter << " errors, please check again!" <<endl;
 	}
-*/
-    if(getfrom)
+
+/*    if(getfrom)
         cout << "getfromCache is correct !!\n";
     else
         cout << "getfromCache is incorrect !!\n";
 	return 0;
+    */
 }

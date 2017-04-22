@@ -30,36 +30,40 @@ int L1cache::getfromCache(const int address)
 	int tag = (address >> shift);
 	int data_label = address % 4;  // index of which word in the block
 	int set_label = (address >> 2) % set_num ;  // which set
+	int block_label = 0;
 
 	for(unsigned i = 0; i < way_number; i++){
-		int block_label = set_label*way_number + i;
+		int temp_label = set_label * way_number + i;
+		// get block with the smallest release bits
+		if(i == 0)
+			block_label = temp_label;
+		else{
+			if(cache[block_label][2] > cache[temp_label][2])
+				block_label = temp_label;
+		}
         // valid = 1
-		if (cache[block_label][0]){
-			if (cache[block_label][3] == tag){
+		if (cache[temp_label][0]){
+			if (cache[temp_label][3] == tag){
 				L1readhit ++;
-				cache[block_label][2] = INT_MAX;
+				cache[temp_label][2] = INT_MAX;
 				// let other blocks release bit decrease(be replaced first)
 				for(unsigned j = 0; j < L1size; j++)
-					if(j != block_label)
+					if(j != temp_label)
 					    cache[j][2]--;
-				return cache[block_label][4 + data_label];
+				return cache[temp_label][4 + data_label];
 			}
 		}
 	}
 
 	L1readmiss++;
 	int* dataptr = mem -> getfromMem(address >> 2);
-	int block_label = 0;
-	// compare which blocks has the least release bits
-	for(unsigned i = 0; i < way_number; i++){
-		if(i == 0)
-		    block_label = set_label * way_number;
-		else{
-		    int templabel = set_label * way_number + i;
-		    if(cache[block_label][2] > cache[templabel][2])
-		        block_label = templabel;
-		}
-	}
+	// write back
+	if(cache[block_label][1] == 1){
+	    int write_add = (cache[block_label][3] << (shift-2)) + set_label;
+		//cout << "write_add" << write_add;
+	    mem -> writetoMem(write_add, &(cache[block_label][4]) );
+    }
+	// get new data
 	for(unsigned i = 0; i < 4; i++)
 	    cache[block_label][4 + i] = dataptr[i];
     cache[block_label][0] = 1;
@@ -74,7 +78,55 @@ int L1cache::getfromCache(const int address)
 
 void L1cache::writetoCache(const int address,const int indata)
 {
+	int shift =  2 + log2(set_num);  // right shift how many bits to get tag
+	int tag = (address >> shift);
+	int data_label = address % 4;  // index of which word in the block
+	int set_label = (address >> 2) % set_num ;  // which set
+	int block_label = 0;
 
+	for(unsigned i = 0; i < way_number; i++){
+		int temp_label = set_label * way_number + i;
+		// get block with the smallest release bits
+		if(i == 0)
+			block_label = temp_label;
+		else{
+			if(cache[block_label][2] > cache[temp_label][2])
+				block_label = temp_label;
+		}
+		// valid = 1
+		if (cache[temp_label][0]){
+			if (cache[temp_label][3] == tag){
+				L1writehit++;
+				cache[temp_label][1] = 1;
+				cache[temp_label][2] = INT_MAX;
+				cache[temp_label][4 + data_label] = indata;
+				// let other blocks release bit decrease(be replaced first)
+				for(unsigned j = 0; j < L1size; j++)
+					if(j != temp_label)
+						cache[j][2]--;
+			}
+		}
+	}
+
+	L1writemiss++;
+	int* dataptr = mem -> getfromMem(address >> 2);
+	// write back
+	if(cache[block_label][1] == 1){
+		int write_add = (cache[block_label][3] << (shift - 2)) + set_label;
+		//cout << "write_add" << write_add << '\n';
+		mem -> writetoMem(write_add, &(cache[block_label][4]) );
+	}
+	// get new data
+	for(unsigned i = 0; i < 4; i++)
+		cache[block_label][4 + i] = dataptr[i];
+	cache[block_label][0] = 1;
+	cache[block_label][1] = 1;
+	cache[block_label][2] = INT_MAX;
+	cache[block_label][3] = tag;
+	cache[block_label][4 + data_label] = indata;
+	for(unsigned j = 0; j < L1size; j++)
+		if(j != block_label)
+			cache[j][2]--;
 }
 
 int L1cache::getReadHit(void){
