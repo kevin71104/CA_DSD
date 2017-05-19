@@ -14,13 +14,13 @@ module cache(
     mem_wdata,
     mem_ready
 );
-    
+
 //==== input/output definition ============================
     input          clk;
     // processor interface
     input          proc_reset;
     input          proc_read, proc_write;
-    input   [29:0] proc_addr;
+    input   [29:0] proc_addr; //retrieve byte offset
     input   [31:0] proc_wdata;
     output         proc_stall;
     output  [31:0] proc_rdata;
@@ -30,18 +30,18 @@ module cache(
     output         mem_read, mem_write;
     output  [27:0] mem_addr;
     output [127:0] mem_wdata;
-    
+
 //==== wire/reg definition ================================
-    
+
 //==== combinational circuit ==============================
 
 //==== sequential circuit =================================
 always@( posedge clk or posedge proc_reset ) begin
     if( proc_reset ) begin
-    
+
     end
     else begin
-    
+
     end
 end
 
