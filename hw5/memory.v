@@ -10,39 +10,41 @@ module memory(
     mem_rdata,
     mem_ready
 );
-    
-    parameter MEM_NUM = 256;
-    parameter MEM_WIDTH = 128;
-    parameter LATENCY = 15;  // negedge clock after [Unconditional carry(15ns/CYCLE)+1] cycle
-        
-    parameter IDLE = 2'd0; 
-    parameter WAIT = 2'd1; 
-    parameter BUBBLE = 2'd2; 
-    parameter READY = 2'd3; 
-    
+
+    parameter MEM_NUM = 256;   // mem contains 256 blocks
+    parameter MEM_WIDTH = 128; // read a whole block of 4 words
+    parameter LATENCY = 15;    // negedge clock after [Unconditional carry(15ns/CYCLE)+1] cycle
+
+    parameter IDLE = 2'd0;
+    parameter WAIT = 2'd1;
+    parameter BUBBLE = 2'd2;
+    parameter READY = 2'd3;
+
     input                  clk;
     input                  mem_read, mem_write;
     input           [27:0] mem_addr;
     input  [MEM_WIDTH-1:0] mem_wdata;
     output [MEM_WIDTH-1:0] mem_rdata;
     output                 mem_ready;
-    
+
     // internal FF
     reg             [31:0] mem[MEM_NUM*4-1:0];
     reg             [31:0] mem_next[MEM_NUM*4-1:0];
-    reg     [1:0]          state, state_next;
+    reg              [1:0] state, state_next;
 
     // input FF
     reg                    mem_read_r, mem_write_r;
-    reg           [27:0]   mem_addr_r;
-    reg  [MEM_WIDTH-1:0]   mem_wdata_r;    
+    reg             [27:0] mem_addr_r;
+    reg    [MEM_WIDTH-1:0] mem_wdata_r;
 
     // output FF
     reg                    mem_ready, mem_ready_next;
     reg    [MEM_WIDTH-1:0] mem_rdata, mem_rdata_next;
-    
+
     integer i;
 
+    //============================== Combinational =============================
+    // finite state machine
     always@(*)begin // FSM & control sig
         case(state)
             IDLE:
@@ -53,7 +55,7 @@ module memory(
                     else begin
                         state_next = IDLE;
                     end
-                    
+
                     mem_ready_next = 1'b0;
                 end
             WAIT:
@@ -70,21 +72,23 @@ module memory(
                 end
             READY:
                 begin
-                    state_next = IDLE;  
-                    mem_ready_next = 1'b0;                  
+                    state_next = IDLE;
+                    mem_ready_next = 1'b0;
                 end
             default:
                 begin
                     state_next = IDLE;
                     mem_ready_next = 1'b0;
-                end     
+                end
         endcase
     end
-    
+
+    // update mem_next by writedata or the same data in regs
+    // update readdata
     always@(*) begin // Mem array
         for(i=0;i<MEM_NUM*4;i=i+1)
             mem_next[i] = mem[i];
-    
+
         if( state ==  BUBBLE) begin
             if( ~mem_read_r && mem_write_r ) begin
                 mem_next[mem_addr_r*4]      = mem_wdata_r[31:0];
@@ -92,23 +96,26 @@ module memory(
                 mem_next[mem_addr_r*4+2]    = mem_wdata_r[95:64];
                 mem_next[mem_addr_r*4+3]    = mem_wdata_r[127:96];
             end
-            
+
             if( mem_read_r && ~mem_write_r ) begin
                 mem_rdata_next = {mem[mem_addr_r*4+3],mem[mem_addr_r*4+2],mem[mem_addr_r*4+1],mem[mem_addr_r*4]};
             end
         end
     end
 
+    //================================ Synchronous =============================
+    // update state at negative edge of clock
     always@( negedge clk ) begin
         state <= state_next;
-        
+
         mem_ready <= mem_ready_next;
-        mem_rdata  <= mem_rdata_next;
-        
+        mem_rdata <= mem_rdata_next;
+
         for(i=0;i<MEM_NUM*4;i=i+1)
             mem[i] <= mem_next[i];
     end
 
+    // input to input register
     always@( negedge clk ) begin
         mem_read_r  <=  mem_read;
         mem_write_r <=  mem_write;
@@ -117,7 +124,3 @@ module memory(
     end
 
 endmodule
-
-
-  
-  
