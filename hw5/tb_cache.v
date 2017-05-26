@@ -13,7 +13,7 @@ module tb_cache;
 
     parameter MEM_NUM = 256;
     parameter MEM_WIDTH = 128;
-    
+
     reg             clk;
     reg             proc_reset;
     reg             proc_read;
@@ -32,7 +32,7 @@ module tb_cache;
 
     reg     [MEM_WIDTH-1:0] temp_data;
     integer i, d;
-    
+
     memory u_mem (
         clk  ,
         mem_read  ,
@@ -71,7 +71,7 @@ module tb_cache;
         // $fsdbDumpfile( "cache.fsdb" );
         // $fsdbDumpvars(0,tb_cache, "+mda");
     end
-    
+
     // abort if the design cannot halt
     initial begin
         #(`CYCLE * 100000 );
@@ -81,21 +81,21 @@ module tb_cache;
         $display( "\n" );
         $finish;
     end
-    
+
     // clock
     initial begin
         clk = 1'b0;
         forever #(`H_CYCLE) clk = ~clk;
     end
-    
+
     // memory initialization
     initial begin
         for( i=0; i<MEM_NUM*4; i=i+1 ) begin
-            u_mem.mem[i]  = i; 
+            u_mem.mem[i]  = i;
         end
         $display("Memory has been initialized.\n");
     end
-    
+
     // simulation part
     integer k, error, h;
     initial begin
@@ -108,7 +108,7 @@ module tb_cache;
         #(`CYCLE*4 );
         proc_reset = 1'b0;
         #(`H_CYCLE );
-        
+
         $display( "Processor: Read initial data from memory." );
         for( k=0; k<MEM_NUM*4; k=k) begin
             #(`INPUT_DELAY);
@@ -127,7 +127,7 @@ module tb_cache;
         end
         if(error==0) $display( "    Done correctly so far! ^_^\n" );
         else         $display( "    Total %d errors detected so far! >\"<\n", error[14:0] );
-        
+
         $display( "Processor: Write new data to memory." );
         for( k=0; k<MEM_NUM*4; k=k ) begin
             #(`INPUT_DELAY);
@@ -140,7 +140,7 @@ module tb_cache;
             #(`OUTPUT_DELAY);
         end
         $display( "    Finish writing!\n" );
-        
+
         $display( "Processor: Read new data from memory." );
         for( k=0; k<MEM_NUM*4; k=k ) begin
             #(`INPUT_DELAY);
@@ -160,12 +160,12 @@ module tb_cache;
         end
         if(error==0) $display( "    Done correctly so far! ^_^ \n" );
         else         $display( "    Total %d errors detected so far! >\"< \n", error[14:0] );
-        
+
         #(`CYCLE*4);
         if( error != 0 ) $display( "==== SORRY! There are %d errors. ====\n", error[14:0] );
         else $display( "==== CONGRATULATIONS! Pass cache read-write-read test. ====\n" );
         $display( "Finished all operations at:  ", $time, " ns" );
-        
+
         #(`CYCLE * 10 );
         $display( "Exit testbench simulation at:", $time, " ns" );
         $display( "\n" );

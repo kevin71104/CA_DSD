@@ -76,8 +76,11 @@ module cache(
 
     // comparator's pin
     wire        hit;
+    //test
     wire  [127:0] vibe;
     wire  [127:0] block_vibe;
+    wire          dirtynextvibe;
+    wire          dirtyvibe;
 
 //==== submodules =========================================
     comparator i_comp(
@@ -92,9 +95,12 @@ module cache(
     assign wordIndex  = {proc_addr_r[1:0]};
     assign blockIndex = {proc_addr_r[4:2]};
     assign dataTag    = {proc_addr_r[29:5]};
-
+    //testing
     assign vibe = {{blockdata[3]},{blockdata[2]},{blockdata[1]},{blockdata[0]}};
     assign block_vibe = {{block_next[blockIndex][3]}, {block_next[blockIndex][2]},{block_next[blockIndex][1]},{block_next[blockIndex][0]}};
+    assign dirtynextvibe = blockdirty_next[blockIndex];
+    assign dirtyvibe = blockdirty[blockIndex];
+
     // finite state machine
     always@(*)begin
         case(state)
@@ -503,6 +509,12 @@ module cache(
                             3'd7:
                                 blockvalid_next[7] = 1'b1;
                         endcase
+                    end
+                end
+            WB:
+                begin
+                    if(mem_ready_r)begin
+                        mem_addr_next = {proc_addr_r[29:2]};
                     end
                 end
         endcase
