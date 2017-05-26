@@ -34,16 +34,19 @@ module cache(
 
     integer    i;
     // state parameters
-    parameter  MISS    = 2'd0;
-    parameter  HIT     = 2'd1;
-    parameter  WB      = 2'd2;
-    parameter  PROCESS = 2'd3;
+    parameter  JUDGE   = 3'd0;
+    parameter  WB      = 3'd1;
+    parameter  MISS    = 3'd2;
+    parameter  HIT     = 3'd3;
+    parameter  SHOW    = 3'd4;
+    parameter  STALL   = 3'd5;
 //==== wire/reg definition ================================
     // internal FF
     // 8 blocks with 4 words
     reg  [31:0] block[7:0][3:0], block_next[7:0][3:0];
-    reg         blockvalid[7:0], blockvalid_next[7:0],
+    reg         blockvalid[7:0], blockvalid_next[7:0];
     reg         blockdirty[7:0], blockdirty_next[7:0];
+    reg  [24:0] blocktag[7:0],   blocktag_next[7:0];
     reg   [2:0] state, state_next;
 
     // input FF (*_r <= *)
@@ -73,21 +76,25 @@ module cache(
 
     // comparator's pin
     wire        hit;
+    wire  [127:0] vibe;
+    wire  [127:0] block_vibe;
 
 //==== submodules =========================================
     comparator i_comp(
         .dataTag(dataTag),
         .blockTag(tag),
-        .valid(valid)
+        .valid(valid),
         .hit(hit)
     );
 
 //==== combinational circuit ==============================
     // divide proc_addr_r into 3 parts
-    wordIndex  = proc_addr_r[1:0];
-    blockIndex = proc_addr_r[4:2];
-    dataTag    = proc_addr_r[29:5];
+    assign wordIndex  = {proc_addr_r[1:0]};
+    assign blockIndex = {proc_addr_r[4:2]};
+    assign dataTag    = {proc_addr_r[29:5]};
 
+    assign vibe = {{blockdata[3]},{blockdata[2]},{blockdata[1]},{blockdata[0]}};
+    assign block_vibe = {{block_next[blockIndex][3]}, {block_next[blockIndex][2]},{block_next[blockIndex][1]},{block_next[blockIndex][0]}};
     // finite state machine
     always@(*)begin
         case(state)
@@ -99,18 +106,18 @@ module cache(
                         mem_read_next   = 1'b1;
                         mem_write_next  = 1'b0;
                     end
-                    else begin
-                        state_next = PROCESS;
-                        proc_stall_next = 1'b0;
+                    else if(mem_ready_r)begin
+                        state_next = HIT;
+                        proc_stall_next = 1'b1;
                         mem_read_next   = 1'b0;
                         mem_write_next  = 1'b0;
                     end
                 end
-            HIT:
+            JUDGE:
                 begin
                     if(hit)begin
-                        state_next = PORCESS;
-                        proc_stall_next = 1'b0;
+                        state_next = HIT;
+                        proc_stall_next = 1'b1;
                         mem_read_next   = 1'b0;
                         mem_write_next  = 1'b0;
                     end
@@ -135,24 +142,38 @@ module cache(
                         mem_read_next   = 1'b1;
                         mem_write_next  = 1'b0;
                     end
-                    else begin
+                    else if((~mem_ready_r))begin
                         state_next = WB;
                         proc_stall_next = 1'b1;
                         mem_read_next   = 1'b0;
                         mem_write_next  = 1'b1;
                     end
                 end
-            PROCESS:
+            HIT:
                 begin
-                    state_next = HIT;
+                    state_next = SHOW;
+                    proc_stall_next = 1'b0;
+                    mem_read_next   = 1'b0;
+                    mem_write_next  = 1'b0;
+                end
+            SHOW:
+                begin
+                    state_next = STALL;
+                    proc_stall_next = 1'b1;
+                    mem_read_next   = 1'b0;
+                    mem_write_next  = 1'b0;
+                end
+            STALL:
+                begin
+                    state_next = JUDGE;
                     proc_stall_next = 1'b1;
                     mem_read_next   = 1'b0;
                     mem_write_next  = 1'b0;
                 end
             default:
                 begin
-                    state_next = PROCESS;
-                    proc_stall_next = 1'b0;
+                    state_next = JUDGE;
+                    proc_stall_next = 1'b1;
                     mem_read_next   = 1'b0;
                     mem_write_next  = 1'b0;
                 end
@@ -217,21 +238,37 @@ module cache(
         endcase
         case(blockIndex)
             3'd0:
-                {blockdata[3:0]} = {block[0][3:0]};
+                for(i=0;i<=3;i=i+1)begin
+                    blockdata[i] = block[0][i];
+                end
             3'd1:
-                {blockdata[3:0]} = {block[1][3:0]};
+                for(i=0;i<=3;i=i+1)begin
+                    blockdata[i] = block[1][i];
+                end
             3'd2:
-                {blockdata[3:0]} = {block[2][3:0]};
+                for(i=0;i<=3;i=i+1)begin
+                    blockdata[i] = block[2][i];
+                end
             3'd3:
-                {blockdata[3:0]} = {block[3][3:0]};
+                for(i=0;i<=3;i=i+1)begin
+                    blockdata[i] = block[3][i];
+                end
             3'd4:
-                {blockdata[3:0]} = {block[4][3:0]};
+                for(i=0;i<=3;i=i+1)begin
+                    blockdata[i] = block[4][i];
+                end
             3'd5:
-                {blockdata[3:0]} = {block[5][3:0]};
+                for(i=0;i<=3;i=i+1)begin
+                    blockdata[i] = block[5][i];
+                end
             3'd6:
-                {blockdata[3:0]} = {block[6][3:0]};
+                for(i=0;i<=3;i=i+1)begin
+                    blockdata[i] = block[6][i];
+                end
             3'd7:
-                {blockdata[3:0]} = {block[7][3:0]};
+                for(i=0;i<=3;i=i+1)begin
+                    blockdata[i] = block[7][i];
+                end
         endcase
     end
 
@@ -239,13 +276,14 @@ module cache(
     always@(*)begin
         // get original FF content
         for(i=0;i<=7;i=i+1)begin
-            {block_next[i][3:0]} = {block[i][3:0]};
+            {{block_next[i][3]},{block_next[i][2]},{block_next[i][1]},{block_next[i][0]}}
+               = {{block[i][3]},{block[i][2]},{block[i][1]},{block[i][0]}};
             blockvalid_next[i] = blockvalid[i];
             blockdirty_next[i] = blockdirty[i];
             blocktag_next[i] = blocktag[i];
         end
         case(state)
-            PROCESS:
+            HIT:
                 begin
                     // READ
                     if(proc_read_r && ~proc_write_r)begin
@@ -260,7 +298,6 @@ module cache(
                                 proc_rdata_next = blockdata[3];
                         endcase
                     end
-
                     // WRITE
                     if(~proc_read_r && proc_write_r)begin
                         case(blockIndex)
@@ -373,14 +410,14 @@ module cache(
                         endcase
                     end
                 end
-            HIT:
+            JUDGE:
                 begin
                     if(~dirty && ~hit)begin
                         mem_addr_next = {proc_addr_r[29:2]};
                     end
                     else if(dirty && ~hit)begin
                         mem_addr_next = {tag[24:0],blockIndex[2:0]};
-                        mem_wdata_next = {blockdata[3:0]};
+                        mem_wdata_next = {{blockdata[3]},{blockdata[2]},{blockdata[1]},{blockdata[0]}};
                     end
                 end
             MISS:
@@ -388,21 +425,29 @@ module cache(
                     if(mem_ready_r)begin
                         case(blockIndex)
                             3'd0:
-                                {block_next[0][3:0]} = mem_rdata_r;
+                                {{block_next[0][3]},{block_next[0][2]},{block_next[0][1]},{block_next[0][0]}}
+                                 = mem_rdata_r;
                             3'd1:
-                                {block_next[1][3:0]} = mem_rdata_r;
+                                {{block_next[1][3]},{block_next[1][2]},{block_next[1][1]},{block_next[1][0]}}
+                                 = mem_rdata_r;
                             3'd2:
-                                {block_next[2][3:0]} = mem_rdata_r;
+                                {{block_next[2][3]},{block_next[2][2]},{block_next[2][1]},{block_next[2][0]}}
+                                 = mem_rdata_r;
                             3'd3:
-                                {block_next[3][3:0]} = mem_rdata_r;
+                                {{block_next[3][3]},{block_next[3][2]},{block_next[3][1]},{block_next[3][0]}}
+                                 = mem_rdata_r;
                             3'd4:
-                                {block_next[4][3:0]} = mem_rdata_r;
+                                {{block_next[4][3]},{block_next[4][2]},{block_next[4][1]},{block_next[4][0]}}
+                                 = mem_rdata_r;
                             3'd5:
-                                {block_next[5][3:0]} = mem_rdata_r;
+                                {{block_next[5][3]},{block_next[5][2]},{block_next[5][1]},{block_next[5][0]}}
+                                 = mem_rdata_r;
                             3'd6:
-                                {block_next[6][3:0]} = mem_rdata_r;
+                                {{block_next[6][3]},{block_next[6][2]},{block_next[6][1]},{block_next[6][0]}}
+                                 = mem_rdata_r;
                             3'd7:
-                                {block_next[7][3:0]} = mem_rdata_r;
+                                {{block_next[7][3]},{block_next[7][2]},{block_next[7][1]},{block_next[7][0]}}
+                                 = mem_rdata_r;
                         endcase
                         case(blockIndex)
                             3'd0:
@@ -469,8 +514,8 @@ module cache(
                 blockvalid[i]  <= 1'b0;
                 blockdirty[i]  <= 1'b0;
             end
-            state_next = PROCESS;
-            proc_stall_next = 1'b0;
+            state_next = JUDGE;
+            proc_stall_next = 1'b1;
         end
         else begin
             // output
@@ -486,7 +531,12 @@ module cache(
             state <= state_next;
 
             //internal FF
-            {block[7:0][3:0]} <= {block_next[7:0][3:0]};
+            for(i=0;i<=7;i=i+1)begin
+                {{block[i][3]},{block[i][2]},{block[i][1]},{block[i][0]}} <= {{block_next[i][3]},{block_next[i][2]},{block_next[i][1]},{block_next[i][0]}};
+                blocktag[i] <= blocktag_next[i];
+                blockvalid[i] <= blockvalid_next[i];
+                blockdirty[i] <= blockdirty_next[i];
+            end
         end
     end
 
@@ -515,6 +565,8 @@ module comparator(
     input           valid;
     output          hit;
 
-    temp = (dataTag == blockTag)? 1 : 0;
-    hit = valid ? temp : 0;
+    wire            temp;
+
+    assign temp = (dataTag == blockTag)? 1 : 0;
+    assign hit = valid ? temp : 0;
 endmodule
