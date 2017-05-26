@@ -60,6 +60,13 @@ module cache(
     reg [127:0] mem_wdata, mem_wdata_next;
     reg  [31:0] proc_rdata, proc_rdata_next;
 
+    // MUX
+    reg  [24:0] tag;
+    reg         valid;
+    reg         dirty;
+    reg  [31:0] blockdata[3:0];
+    reg  [31:0] block_nextdata[3:0];
+
     // divide proc_addr_r into 3 wire
     wire  [1:0] wordIndex;
     wire  [2:0] blockIndex;
@@ -67,11 +74,6 @@ module cache(
 
     // comparator's pin
     wire        hit;
-    reg  [24:0] tag;
-    reg         valid;
-
-    // writeback
-    reg         dirty;
 
 //==== submodules =========================================
     comparator i_comp(
@@ -142,46 +144,95 @@ module cache(
 
     // tag, valid, dirty MUX
     always@(*)begin
-        tag = blocktag[blockindex];
-        valid = blockvalid[blockindex];
-        dirty = blockdirty[blockindex];
         case(blockIndex)
             3'd0:
                 tag = blocktag[0];
-                valid = blockvalid[0];
-                dirty = blockdirty[0];
             3'd1:
                 tag = blocktag[1];
-                valid = blockvalid[1];
-                dirty = blockdirty[1];
             3'd2:
                 tag = blocktag[2];
-                valid = blockvalid[2];
-                dirty = blockdirty[2];
             3'd3:
                 tag = blocktag[3];
-                valid = blockvalid[3];
-                dirty = blockdirty[3];
             3'd4:
                 tag = blocktag[4];
-                valid = blockvalid[4];
-                dirty = blockdirty[4];
             3'd5:
                 tag = blocktag[5];
-                valid = blockvalid[5];
-                dirty = blockdirty[5];
             3'd6:
                 tag = blocktag[6];
+            3'd7:
+                tag = blocktag[7];
+        endcase
+        case(blockIndex)
+            3'd0:
+                valid = blockvalid[0];
+            3'd1:
+                valid = blockvalid[1];
+            3'd2:
+                valid = blockvalid[2];
+            3'd3:
+                valid = blockvalid[3];
+            3'd4:
+                valid = blockvalid[4];
+            3'd5:
+                valid = blockvalid[5];
+            3'd6:
                 valid = blockvalid[6];
+            3'd7:
+                valid = blockvalid[7];
+        endcase
+        case(blockIndex)
+            3'd0:
+                dirty = blockdirty[0];
+            3'd1:
+                dirty = blockdirty[1];
+            3'd2:
+                dirty = blockdirty[2];
+            3'd3:
+                dirty = blockdirty[3];
+            3'd4:
+                dirty = blockdirty[4];
+            3'd5:
+                dirty = blockdirty[5];
+            3'd6:
                 dirty = blockdirty[6];
             3'd7:
-                tag = blocktag[6];
-                valid = blockvalid[7];
                 dirty = blockdirty[7];
-            default:
-                tag = 25'd0;
-                valid = 1'b0;
-                dirty = 1'b0;
+        endcase
+        case(blockIndex)
+            3'd0:
+                {blockdata[3:0]} = {block[0][3:0]};
+            3'd1:
+                {blockdata[3:0]} = {block[1][3:0]};
+            3'd2:
+                {blockdata[3:0]} = {block[2][3:0]};
+            3'd3:
+                {blockdata[3:0]} = {block[3][3:0]};
+            3'd4:
+                {blockdata[3:0]} = {block[4][3:0]};
+            3'd5:
+                {blockdata[3:0]} = {block[5][3:0]};
+            3'd6:
+                {blockdata[3:0]} = {block[6][3:0]};
+            3'd7:
+                {blockdata[3:0]} = {block[7][3:0]};
+        endcase
+        case(blockIndex)
+            3'd0:
+                {block_next[0][3:0]} = {block_nextdata[3:0]};
+            3'd1:
+                {block_next[1][3:0]} = {block_nextdata[3:0]};
+            3'd2:
+                {block_next[2][3:0]} = {block_nextdata[3:0]};
+            3'd3:
+                {block_next[3][3:0]} = {block_nextdata[3:0]};
+            3'd4:
+                {block_next[4][3:0]} = {block_nextdata[3:0]};
+            3'd5:
+                {block_next[5][3:0]} = {block_nextdata[3:0]};
+            3'd6:
+                {block_next[6][3:0]} = {block_nextdata[3:0]};
+            3'd7:
+                {block_next[7][3:0]} = {block_nextdata[3:0]};
         endcase
     end
 
@@ -195,9 +246,30 @@ module cache(
         end
         if (state == PROCESS) begin
             if(proc_read_r && ~proc_write_r)begin
-                proc_rdata_next =
+                case(wordIndex)
+                    2'd0:
+                        proc_rdata_next = blockdata[0];
+                    2'd1:
+                        proc_rdata_next = blockdata[1];
+                    2'd2:
+                        proc_rdata_next = blockdata[2];
+                    2'd3:
+                        proc_rdata_next = blockdata[3];
+                endcase
             end
 
+            if(~proc_read_r && proc_write_r)begin
+                case(wordIndex)
+                    2'd0:
+                        block_nextdata[0] = proc_wdata_r;
+                    2'd1:
+                        block_nextdata[1] = proc_wdata_r;
+                    2'd2:
+                        block_nextdata[2] = proc_wdata_r;
+                    2'd3:
+                        block_nextdata[3] = proc_wdata_r;
+                endcase
+            end
         end
     end
 //==== sequential circuit =================================
