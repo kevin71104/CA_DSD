@@ -64,13 +64,8 @@ module cache(
     wire hit;
 
 	integer i;
-    //test
-    wire          dirtyvibe;
 
 //==== combinational circuit ==============================
-
-    assign dirtyvibe = blockdirty_next;
-
     assign wordIndex  = proc_addr[1:0];
     assign blockIndex = proc_addr[4:2];
     assign dataTag    = proc_addr[29:5];
@@ -98,11 +93,9 @@ module cache(
         blocktag_next = blocktag[blockIndex];
 		//read
 		if (proc_read || proc_write)begin
-			//if valid = 1
 			if (valid == 1) begin
-				//if tag same, get value from cache
-				//read hit
 				if(hit)begin
+                    //read hit
 					if(proc_read && ~proc_write) begin
 						case(wordIndex)
 							2'd0: proc_rdata = blockdata[31:0];
@@ -112,7 +105,7 @@ module cache(
 						endcase
 						proc_stall = 0;
 					end
-					//proc_write
+					//write hit
 					else if(~proc_read && proc_write)begin
 						case(wordIndex)
 							2'd0: block_next[31:0]   = proc_wdata;
@@ -120,14 +113,13 @@ module cache(
 							2'd2: block_next[95:64]  = proc_wdata;
 							2'd3: block_next[127:96] = proc_wdata;
 						endcase
-						blockdirty_next = 1;//D=1
+						blockdirty_next = 1;
 						proc_stall = 0;
 					end
 				end
-				//if tags aren't same
 				else begin
 					proc_stall = 1;
-					//dirty=0
+					// MISS
 					if(dirty == 0) begin
 						if(mem_ready == 0) begin
 							mem_read = 1;
@@ -136,43 +128,36 @@ module cache(
 						end
 						//ready=1
 						else begin
-							//stop mem
 							mem_read  = 0;
 							mem_write = 0;
-							//write data from mem into cache
 							block_next = mem_rdata;
 							blocktag_next = dataTag;
-							//then go to read hit
 						end
 					end
-					//dirty=1,write back
+					// WB
 					else begin
-						//write data into mem
 						if(mem_ready == 0 ) begin
 							mem_read  = 0;
 							mem_write = 1;
                             mem_addr   = {tag[24:0],blockIndex[2:0]};
                             mem_wdata  = blockdata;
 						end
-						//after finishing write back, get value from mem
 						else begin
-                            //mem_read   = 1'b0;
-                            //mem_write  = 1'b0;
+                            mem_read   = 1'b0;
+                            mem_write  = 1'b0;
                             blockdirty_next = 1'b0;
 						end
 					end
 				end
 			end
-			//valid = 0,read miss, need to get value from memory
+			//valid = 0
 			else begin
 				proc_stall = 1;
-				//get value from mem
 				if (mem_ready == 0) begin
 					mem_read  = 1;
 					mem_write = 0;
 					mem_addr  = proc_addr[29:2];
 				end
-				//write data from mem into cach,and read
 				else begin
 					mem_read  = 0;
 					mem_write = 0;
@@ -203,7 +188,6 @@ module cache(
 				blockdirty[i] <= 1'b0;
                 blockvalid[i] <= 1'b0;
             end
-
 		end
         else begin
             block[blockIndex] <= block_next;
