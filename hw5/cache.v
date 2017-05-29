@@ -79,22 +79,20 @@ module cache(
 
     // comparator's pin
     wire        hit;
-    wire        match;
-
-    wire test;
+    //wire        match;
 
 //==== submodules =========================================
 
 //==== combinational circuit ==============================
-    assign test = state[2];
     // divide proc_addr_r into 3 parts
     assign wordIndex  = proc_addr_r[1:0];
     assign blockIndex = proc_addr_r[4:2];
     assign dataTag    = proc_addr_r[29:5];
 
     // comparator's pin
-    assign match = (tag == dataTag) ? 1 : 0;
-    assign hit = ~valid ? 0 : match ;
+    //assign match = (tag == dataTag) ? 1 : 0;
+    //assign hit = ~valid ? 0 : match ;
+    assign hit = valid ? (tag == dataTag) : 0;
 
     // finite state machine
     always@(*)begin
@@ -266,8 +264,8 @@ module cache(
         end
     end
 
-    // input to input register
     always@( posedge clk)begin
+        // input to input register
         proc_read_r  <= proc_read;
         proc_write_r <= proc_write;
         proc_addr_r  <= proc_addr;
