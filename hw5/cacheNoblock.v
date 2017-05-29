@@ -126,7 +126,6 @@ module cache(
 							mem_write = 0;
 							mem_addr = proc_addr[29:2];
 						end
-						//ready=1
 						else begin
 							mem_read  = 0;
 							mem_write = 0;
@@ -181,7 +180,6 @@ module cache(
 	end
 
 //==== sequential circuit =================================
-
 	always@(posedge clk or posedge proc_reset) begin
 		if(proc_reset)begin
 			for (i=0;i<=7;i=i+1)begin
