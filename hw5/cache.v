@@ -1,3 +1,10 @@
+//==============================================================================
+//                  Computer Architecture 2017 Hw5 : Cache                     =
+//                Type: Direct-mapped, 8 blocks with 4 words                   =
+//                           Write Back policy                                 =
+//                      with Input/Output flip-flops                           =
+//           post-simulation cycle: 4.6ns / under 5ns synthesis                =
+//==============================================================================
 module cache(
     clk,
     proc_reset,
@@ -39,6 +46,7 @@ module cache(
     parameter  MISS    = 3'd2;
     parameter  HIT     = 3'd3;
     parameter  STALL   = 3'd4;
+    parameter  BEGIN   = 3'd5;
 //==== wire/reg definition ================================
     // internal FF
     // 8 blocks with 4 words
@@ -105,6 +113,84 @@ module cache(
         mem_addr_next   = mem_addr;
         mem_wdata_next  = mem_wdata;
         case(state)
+            BEGIN:
+                begin
+                    if(proc_read_r | proc_write_r)begin
+                        state_next = JUDGE;
+                        proc_stall_next = 1'b1;
+                        mem_read_next   = 1'b0;
+                        mem_write_next  = 1'b0;
+                    end
+                    else begin
+                        state_next = BEGIN;
+                        proc_stall_next = 1'b1;
+                        mem_read_next   = 1'b0;
+                        mem_write_next  = 1'b0;
+                    end
+                end
+            JUDGE:
+                begin
+                    if(proc_read_r | proc_write_r)begin
+                        if(hit)begin
+                            state_next = HIT;
+                            proc_stall_next = 1'b0;
+                            mem_read_next   = 1'b0;
+                            mem_write_next  = 1'b0;
+                            // READ
+                            if(proc_read_r && ~proc_write_r)begin
+                                case(wordIndex)
+                                    2'd0:
+                                        proc_rdata_next = blockdata[31:0];
+                                    2'd1:
+                                        proc_rdata_next = blockdata[63:32];
+                                    2'd2:
+                                        proc_rdata_next = blockdata[95:64];
+                                    2'd3:
+                                        proc_rdata_next = blockdata[127:96];
+                                endcase
+                            end
+                        end
+                        else if(dirty && ~hit)begin
+                            state_next = WB;
+                            proc_stall_next = 1'b1;
+                            mem_read_next   = 1'b0;
+                            mem_write_next  = 1'b1;
+                            mem_addr_next = {tag[24:0],blockIndex[2:0]}; //WB
+                            mem_wdata_next = blockdata;
+                        end
+                        else if(~dirty && ~hit)begin
+                            state_next = MISS;
+                            proc_stall_next = 1'b1;
+                            mem_read_next   = 1'b1;
+                            mem_write_next  = 1'b0;
+                            mem_addr_next = {proc_addr_r[29:2]}; //miss
+                        end
+                    end
+                    // no read or write will stay at JUDGE
+                    else begin
+                        state_next = JUDGE;
+                        proc_stall_next = 1'b0;
+                        mem_read_next   = 1'b0;
+                        mem_write_next  = 1'b0;
+                    end
+                end
+            WB:
+                begin
+                    if(mem_ready_r)begin
+                        state_next = MISS;
+                        proc_stall_next = 1'b1;
+                        mem_read_next   = 1'b1;
+                        mem_write_next  = 1'b0;
+                        mem_addr_next = {proc_addr_r[29:2]}; //miss
+                    end
+                    else if((~mem_ready_r))begin
+                        state_next = WB;
+                        proc_stall_next = 1'b1;
+                        mem_read_next   = 1'b0;
+                        mem_write_next  = 1'b1;
+                        mem_addr_next = {tag[24:0],blockIndex[2:0]}; //WB
+                    end
+                end
             MISS:
                 begin
                     if(mem_ready_r)begin
@@ -131,60 +217,7 @@ module cache(
                         mem_addr_next = {proc_addr_r[29:2]}; //miss
                     end
                 end
-            JUDGE:
-                begin
-                    if(hit)begin
-                        state_next = HIT;
-                        proc_stall_next = 1'b0;
-                        mem_read_next   = 1'b0;
-                        mem_write_next  = 1'b0;
-                        // READ
-                        if(proc_read_r && ~proc_write_r)begin
-                            case(wordIndex)
-                                2'd0:
-                                    proc_rdata_next = blockdata[31:0];
-                                2'd1:
-                                    proc_rdata_next = blockdata[63:32];
-                                2'd2:
-                                    proc_rdata_next = blockdata[95:64];
-                                2'd3:
-                                    proc_rdata_next = blockdata[127:96];
-                            endcase
-                        end
-                    end
-                    else if(dirty && ~hit)begin
-                        state_next = WB;
-                        proc_stall_next = 1'b1;
-                        mem_read_next   = 1'b0;
-                        mem_write_next  = 1'b1;
-                        mem_addr_next = {tag[24:0],blockIndex[2:0]}; //WB
-                        mem_wdata_next = blockdata;
-                    end
-                    else if(~dirty && ~hit)begin
-                        state_next = MISS;
-                        proc_stall_next = 1'b1;
-                        mem_read_next   = 1'b1;
-                        mem_write_next  = 1'b0;
-                        mem_addr_next = {proc_addr_r[29:2]}; //miss
-                    end
-                end
-            WB:
-                begin
-                    if(mem_ready_r)begin
-                        state_next = MISS;
-                        proc_stall_next = 1'b1;
-                        mem_read_next   = 1'b1;
-                        mem_write_next  = 1'b0;
-                        mem_addr_next = {proc_addr_r[29:2]}; //miss
-                    end
-                    else if((~mem_ready_r))begin
-                        state_next = WB;
-                        proc_stall_next = 1'b1;
-                        mem_read_next   = 1'b0;
-                        mem_write_next  = 1'b1;
-                        mem_addr_next = {tag[24:0],blockIndex[2:0]}; //WB
-                    end
-                end
+
             HIT:
                 begin
                     state_next = STALL;
@@ -193,13 +226,6 @@ module cache(
                     mem_write_next  = 1'b0;
                 end
             STALL:
-                begin
-                    state_next = JUDGE;
-                    proc_stall_next = 1'b1;
-                    mem_read_next   = 1'b0;
-                    mem_write_next  = 1'b0;
-                end
-            default:
                 begin
                     state_next = JUDGE;
                     proc_stall_next = 1'b1;
@@ -248,7 +274,7 @@ module cache(
         //====== asynchronous reset should only contain if-else block,
         //====== anything beyond these scopes is prohibited.
         if(proc_reset)begin
-            state <= JUDGE;
+            state <= BEGIN;
             for(i=0;i<=7;i=i+1)begin
                 blockvalid[i] <= 1'b0;
                 blockdirty[i] <= 1'b0;
